@@ -1,0 +1,303 @@
+import React, { useState } from 'react';
+
+export default function GoalAffirmationApp() {
+  const [goal, setGoal] = useState('');
+  const [results, setResults] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const analyzeGoal = (goalText) => {
+    // キーワードを抽出
+    const extractKeywords = (text) => {
+      const importantWords = text.match(/[一-龥ぁ-んァ-ヶー]+/g) || [];
+      return importantWords.filter(word => word.length > 1).slice(0, 5);
+    };
+
+    // 目標のタイプを判定
+    const determineGoalType = (text) => {
+      if (text.includes('健康') || text.includes('運動') || text.includes('ダイエット')) {
+        return '健康・フィットネス';
+      } else if (text.includes('勉強') || text.includes('学習') || text.includes('資格')) {
+        return '学習・スキルアップ';
+      } else if (text.includes('仕事') || text.includes('キャリア') || text.includes('転職')) {
+        return 'キャリア・仕事';
+      } else if (text.includes('お金') || text.includes('貯金') || text.includes('投資')) {
+        return '経済・財務';
+      } else if (text.includes('人間関係') || text.includes('恋愛') || text.includes('家族')) {
+        return '人間関係';
+      } else {
+        return '自己実現';
+      }
+    };
+
+    // 具体的な行動を抽出
+    const extractActions = (text) => {
+      const actionPatterns = [
+        /毎日[^。、]+/g,
+        /[^。、]+する/g,
+        /[^。、]+したい/g,
+        /[^。、]+になる/g
+      ];
+      
+      let actions = [];
+      actionPatterns.forEach(pattern => {
+        const matches = text.match(pattern) || [];
+        actions = actions.concat(matches);
+      });
+      
+      return [...new Set(actions)].slice(0, 3);
+    };
+
+    // 期限を抽出
+    const extractTimeline = (text) => {
+      const timePatterns = [
+        /\d+年/g,
+        /\d+ヶ月/g,
+        /\d+月/g,
+        /来年/g,
+        /今年/g,
+        /毎日/g,
+        /毎週/g
+      ];
+      
+      for (let pattern of timePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+          return match[0];
+        }
+      }
+      return '継続的に';
+    };
+
+    // 感情的な要素を抽出
+    const extractEmotions = (text) => {
+      const positiveWords = ['楽しい', '嬉しい', '幸せ', '充実', '達成感', '自信', '誇り', '喜び'];
+      const found = positiveWords.filter(word => text.includes(word));
+      
+      if (found.length === 0) {
+        return ['充実感', '達成感', '喜び'];
+      }
+      return found;
+    };
+
+    return {
+      original: goalText,
+      keywords: extractKeywords(goalText),
+      type: determineGoalType(goalText),
+      actions: extractActions(goalText),
+      timeline: extractTimeline(goalText),
+      emotions: extractEmotions(goalText)
+    };
+  };
+
+  const createAffirmation = (analysis) => {
+    const mainAction = analysis.actions[0] || '目標に向かって進んでいる';
+    
+    let situation = `私は${analysis.timeline}`;
+    if (mainAction.includes('毎日')) {
+      situation += mainAction;
+    } else {
+      situation += `、${mainAction}`;
+    }
+    
+    let visualization = `私は${analysis.type}の分野で着実に成長し、`;
+    if (analysis.keywords.length > 0) {
+      visualization += `${analysis.keywords[0]}を実現している`;
+    } else {
+      visualization += '理想の自分に近づいている';
+    }
+    
+    const emotion = analysis.emotions[0] || '充実感';
+    let emotional = `この過程を通じて、私は${emotion}を感じ、毎日がより豊かになっている`;
+    
+    const affirmation = `${situation}。${visualization}。${emotional}。私は自分の成長を実感し、目標達成に向かって確実に前進していることを心から喜んでいる。`;
+    
+    return {
+      full: affirmation,
+      situation: situation,
+      visualization: visualization,
+      emotional: emotional
+    };
+  };
+
+  const generateAffirmation = async () => {
+    if (!goal.trim()) {
+      alert('目標を入力してください。');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      // 分析処理（実際のアプリではAPIエンドポイントに送信）
+      await new Promise(resolve => setTimeout(resolve, 500)); // シミュレート
+      
+      const analysis = analyzeGoal(goal);
+      const affirmation = createAffirmation(analysis);
+      
+      setResults({
+        affirmation,
+        analysis
+      });
+    } catch (error) {
+      console.error('エラーが発生しました:', error);
+      alert('アファメーションの生成中にエラーが発生しました。');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setGoal('');
+    setResults(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center p-4">
+      <div className="bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8 max-w-4xl w-full">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
+          🎯 目標達成アファメーション生成アプリ
+        </h1>
+        <p className="text-center text-gray-600 mb-8 text-lg">
+          あなたの目標を効果的なアファメーションに変換します
+        </p>
+
+        <div className="mb-8">
+          <label htmlFor="goalInput" className="block text-gray-700 font-semibold mb-3">
+            あなたの目標を入力してください：
+          </label>
+          <textarea
+            id="goalInput"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            maxLength={3000}
+            rows={6}
+            className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none transition-colors resize-vertical"
+            placeholder="例：来年までに英語を流暢に話せるようになりたい。毎日勉強して、TOEICで900点以上を取りたい..."
+          />
+          <div className="text-right text-gray-500 text-sm mt-2">
+            {goal.length} / 3000文字
+          </div>
+        </div>
+
+        <button
+          onClick={generateAffirmation}
+          disabled={isLoading}
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 px-8 rounded-full hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? '生成中...' : 'アファメーションを生成する'}
+        </button>
+
+        {results && (
+          <div className="mt-10 animate-fade-in">
+            <div className="bg-gray-50 rounded-xl p-6 mb-6 border-l-4 border-purple-500">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                ✨ あなたの目標達成アファメーション
+              </h2>
+              <div className="bg-white p-5 rounded-lg shadow-sm text-lg leading-relaxed text-gray-700">
+                {results.affirmation.full}
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-xl p-6 mb-6 border-l-4 border-purple-500">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                📊 目標の分析
+              </h2>
+              <div className="space-y-3">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <span className="font-semibold text-purple-600">目標のタイプ:</span>
+                  <span className="ml-2 text-gray-700">{results.analysis.type}</span>
+                </div>
+                {results.analysis.keywords.length > 0 && (
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <span className="font-semibold text-purple-600">キーワード:</span>
+                    <span className="ml-2 text-gray-700">{results.analysis.keywords.join('、')}</span>
+                  </div>
+                )}
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <span className="font-semibold text-purple-600">期限・頻度:</span>
+                  <span className="ml-2 text-gray-700">{results.analysis.timeline}</span>
+                </div>
+                {results.analysis.actions.length > 0 && (
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <span className="font-semibold text-purple-600">具体的な行動:</span>
+                    <span className="ml-2 text-gray-700">{results.analysis.actions.join('、')}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-xl p-6 mb-6 border-l-4 border-purple-500">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                🎯 3つのポイント
+              </h2>
+              <div className="space-y-3">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <span className="font-semibold text-purple-600">1. 状況:</span>
+                  <div className="mt-1 text-gray-700">{results.affirmation.situation}</div>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <span className="font-semibold text-purple-600">2. 映像:</span>
+                  <div className="mt-1 text-gray-700">{results.affirmation.visualization}</div>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <span className="font-semibold text-purple-600">3. 感情:</span>
+                  <div className="mt-1 text-gray-700">{results.affirmation.emotional}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+              <h3 className="text-xl font-bold text-yellow-800 mb-3">
+                📅 日常的なアクションプラン
+              </h3>
+              <ul className="space-y-2 text-yellow-800">
+                <li className="flex items-start">
+                  <span className="mr-2">•</span>
+                  <div>
+                    <strong>毎朝のアファメーション:</strong> 生成されたアファメーションを声に出して読む
+                  </div>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">•</span>
+                  <div>
+                    <strong>週次進捗確認:</strong> 毎週日曜日に進捗を振り返る
+                  </div>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">•</span>
+                  <div>
+                    <strong>心身のケア:</strong> 定期的な運動やリラクゼーションを取り入れる
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <button
+              onClick={resetForm}
+              className="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-full hover:bg-red-600 transition-colors"
+            >
+              新しい目標を入力する
+            </button>
+          </div>
+        )}
+      </div>
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
+        }
+      `}</style>
+    </div>
+  );
+}
